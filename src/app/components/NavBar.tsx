@@ -5,8 +5,8 @@ import { useAuth } from "../store/AuthProvider/page";
 import { useTheme } from "../store/ThemeProvider/page";
 import { User } from "lucide-react";
 const NavBar = () => {
-  const { toggleTheme } = useTheme();
-
+  const { toggleTheme, isDarkMode} = useTheme();
+  console.log(isDarkMode?"Dark":"Light")
   const { isLoggedIn, logout } = useAuth();
   return (
     <div className="flex justify-between mx-5 p-2 items-center">
@@ -25,6 +25,7 @@ const NavBar = () => {
             {isLoggedIn ? <User className="w-10 h-6" /> : "Login"}{" "}
           </Link>
         </button>{" "}
+        
         <button onClick={logout} className="cursor-pointer">
           {isLoggedIn && "Logout"}
         </button>
