@@ -1,7 +1,7 @@
 "use client";
 import { supabase } from "@/app/CreateClient";
 import { useRouter } from "next/navigation";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -34,16 +34,20 @@ const AuthProvider = ({
   const [error, setError] = useState<string | null>(null);
   const [id, setId] = useState<string | null>(null);
 
-  const checkAuth = () => {
-    supabase.auth.onAuthStateChange((event, session) => {
-      console.log(session?.user.id);
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(session?.user?.id);
       setIsLoggedIn(session !== null);
-      console.log(session === null);
-      setId(session?.user.id ?? "");
+      setId(session?.user?.id ?? "");
     });
-  };
-  checkAuth();
 
+    // Cleanup the listener when the component unmounts
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  
   // Function to Call for Sign in
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -83,6 +87,7 @@ const AuthProvider = ({
     setIsLoading(false);
     router.push("/pages/Login");
   };
+  
   // Function to Call for Signout
   const logout = async () => {
     setIsLoading(true);

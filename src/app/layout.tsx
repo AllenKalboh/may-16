@@ -5,6 +5,7 @@ import NavBar from "./components/NavBar";
 import AuthProvider from "./store/AuthProvider/page";
 import UserProvider from "./store/UserProvider/page";
 import ThemeProvider from "./store/ThemeProvider/page";
+import ResponsiveNav from "./components/ResponsiveNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,13 +32,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
-          <AuthProvider>
-            <NavBar />
-
-            <UserProvider> {children} </UserProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        {/* <ThemeProvider> */}
+          {/* <AuthProvider> */}
+            {/* <NavBar /> */}
+            {/* <UserProvider> */}
+              {children}
+            {/* </UserProvider> */}
+          {/* </AuthProvider> */}
+        {/* </ThemeProvider> */}
       </body>
     </html>
   );

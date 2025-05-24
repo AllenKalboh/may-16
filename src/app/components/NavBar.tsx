@@ -21,7 +21,7 @@ const NavBar = () => {
           <p> Set to Dark Mode</p>
         </button>
         <button className="rounded-full bg-black text-white  h-10 p-1 text-xs font-bold">
-          <Link href={isLoggedIn ? "./pages/Profile" : "./pages/Login"}>
+          <Link href={isLoggedIn ? "./Profile" : "./pages/Login"}>
             {isLoggedIn ? <User className="w-10 h-6" /> : "Login"}{" "}
           </Link>
         </button>{" "}
