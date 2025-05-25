@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { ChangeEvent, useEffect, useState } from 'react'
 import { supabase } from '../CreateClient';
 import Authent from '../components/Auth/page';
 import { Session } from '@supabase/supabase-js';
@@ -10,27 +10,44 @@ const Soperbas = ({ session }: { session: Session }) => {
         id: number;
         title: string;
         description: string;
+        image_url: string;
     }
 
     const [newTask, setNewTask] = useState({ title: "", description: "" });
     const [tasks, setTasks] = useState<Tasks[]>([]);
     const [newDescription, setNewDescription] = useState<string>();
 
+    const uploadImage = async (file: File): Promise<string | null> => {
+        const filePath = `${file.name}-${Date.now()}`
+        const { error } = await supabase.storage.from('tasks-images').upload(filePath, file)
+
+        if (error) {
+            console.error(error.message);
+            return null;
+        }
+
+        const { data } = await supabase.storage.from('tasks-images').getPublicUrl(filePath);
+
+        return data.publicUrl;
+    }
+
     const handleSubmit = async (e: any) => {
         e.preventDefault();
 
+        let imageUrl: string | null = null;
+        if (taskImage) {
+            imageUrl = await uploadImage(taskImage);
+        }
 
         if (!newTask.title.trim() || !newTask.description.trim()) {
             console.warn("Please fill out all fields");
             return;
         }
-
-        const { error } = await supabase.from("tasks").insert({ ...newTask, email: session.user.email }).single();
+        const { error } = await supabase.from("tasks").insert({ ...newTask, email: session.user.email, image_url: imageUrl }).single();
         if (error) {
             console.error(error.message);
         } setNewTask({ title: "", description: "" })
     }
-
     const deleteTask = async (id: number) => {
         const { error } = await supabase.from("tasks").delete().eq('id', id);
         if (error) {
@@ -66,7 +83,26 @@ const Soperbas = ({ session }: { session: Session }) => {
         fetchTasks();
     }, [])
 
+    useEffect(() => {
+        // const subscription = supabase.from('tasks').on
+        // place we're broadcasting our messages to??? hah
+        //                              Task Channel
+        const channel = supabase.channel("tasks-channel")
+        channel.on("postgres_changes", { event: "INSERT", schema: "public", table: "tasks" }, (payload) => {
+            const newTask = payload.new as Tasks;
+            setTasks((prev) => [...prev, newTask])
+        }).subscribe((status) => {
+            console.log("Subscription", status);
+        })
+    }, [])
 
+
+    const [taskImage, setTaskImage] = useState<File | null>(null);
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setTaskImage(e.target.files[0]);
+        }
+    }
 
     return (
         <div className='flex flex-col items-center'>
@@ -78,6 +114,8 @@ const Soperbas = ({ session }: { session: Session }) => {
 
                     <input type="text" className='border-2 p-2 m-2' placeholder="task description" onChange={(e) => setNewTask((prev) => ({ ...prev, description: e.target.value }))} />
 
+                    <input type="file" accept="image/*" onChange={handleFileChange} />
+
                     <button className='border-2 p-2 m-2 duration-300 hover:bg-gray-200'>Add Task </button>
                 </form>
             </div>
@@ -88,7 +126,7 @@ const Soperbas = ({ session }: { session: Session }) => {
                         <div key={task.id} className='border-2 p-2 m-2'>
                             <p> Title: {task.title}</p>
                             <p>Description: {task.description}</p>
-
+                            <img src={task.image_url} alt="" className='w-20' />
                             <div className='flex items-center'>
                                 <p> Edit Desc:</p>
                                 <textarea className="border-2 m-1 p-1" placeholder="update description" onChange={(e) => setNewDescription(e.target.value)} />
