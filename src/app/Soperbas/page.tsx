@@ -1,8 +1,10 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../CreateClient';
+import Authent from '../components/Auth/page';
+import { Session } from '@supabase/supabase-js';
 
-const Soperbas = () => {
+const Soperbas = ({ session }: { session: Session }) => {
 
     interface Tasks {
         id: number;
@@ -16,7 +18,14 @@ const Soperbas = () => {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        const { error } = await supabase.from("tasks").insert(newTask).single();
+
+
+        if (!newTask.title.trim() || !newTask.description.trim()) {
+            console.warn("Please fill out all fields");
+            return;
+        }
+
+        const { error } = await supabase.from("tasks").insert({ ...newTask, email: session.user.email }).single();
         if (error) {
             console.error(error.message);
         } setNewTask({ title: "", description: "" })
@@ -38,22 +47,25 @@ const Soperbas = () => {
 
 
     const fetchTasks = async () => {
-        const { data, error } = await supabase.from("tasks").select("*").order("created_at", { ascending: true });
+        const { data, error } = await supabase
+            .from("tasks")
+            .select("*")
+            .order("created_at", { ascending: true });
+
         if (error) {
             console.error(error.message);
             return;
         }
+
         if (data) {
             setTasks(data);
-            console.log(data);
-            fetchTasks();
         }
-    }
+    };
+
     useEffect(() => {
         fetchTasks();
     }, [])
 
-    console.log(tasks)
 
 
     return (
@@ -77,16 +89,12 @@ const Soperbas = () => {
                             <p> Title: {task.title}</p>
                             <p>Description: {task.description}</p>
 
-                            <div>
-                                <textarea placeholder="update description" onChange={(e) => setNewDescription(e.target.value)} />
+                            <div className='flex items-center'>
+                                <p> Edit Desc:</p>
+                                <textarea className="border-2 m-1 p-1" placeholder="update description" onChange={(e) => setNewDescription(e.target.value)} />
                             </div>
-                            <div className=''>
+                            <div className='flex justify-center'>
                                 <button className='duration-300 hover:bg-gray-200 mx-1' onClick={() => updateTask(task.id)}>Edit</button>
-
-
-
-
-
                                 <button className='duration-300 hover:bg-gray-200 mx-1' onClick={() => deleteTask(task.id)}>Delete</button>
                             </div>
                         </div>
@@ -96,10 +104,10 @@ const Soperbas = () => {
                 })}
 
 
-
             </div>
 
         </div >
+
     )
 }
 
